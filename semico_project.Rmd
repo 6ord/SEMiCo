@@ -53,12 +53,14 @@ lt[which(lt$trend==i),]$trend <- local_trends[i,]$trend
 
 Visual #1
 ```{r}
+palettes <- c('Accent', 'Dark2', 'Paired', 'Pastel1', 'Pastel2', 'Set1', 'Set2', 'Set3', 'BrBG', 'PiYG', 'PRGn', 'PuOr', 'RdBu', 'RdGy', 'RdYlBu', 'RdYlGn', 'Spectral')
+
 gg<-function(graph){
 my_title <- paste("Online Discussion Surrounding", local_trends[i,]$trend)
 my_subtitle <- paste("based on", 2000, "recent tweets")
   ggplot(data=graph,aes(x = reorder(word, n), y = n, fill = "blue")) + 
     geom_bar(show.legend = F, stat = "identity", width = 0.8) +
-    scale_fill_brewer() + 
+    scale_fill_brewer(palette = sample(palettes,1)) +
     labs(title = my_title, subtitle = my_subtitle, y = "Number of Mentions", x = NULL) +
     coord_flip() +
     theme_classic() +
@@ -91,14 +93,67 @@ library(httr)
 setup_twitter_oauth(consumer_key = Sys.getenv("TWITTER_CONSUMER_KEY"), consumer_secret =Sys.getenv("TWITTER_CONSUMER_SECRET"), access_token = "951665733859233792-RuDfOTRGxagpFfVR3bs3zyRRctbGCEP", access_secret = "qh5ORSTqUMD99ukSRmsXLzMJfDiuLvZuRPkUxd9blooLs")
 ```
 
+text simulator
+```{r}
+seq1 <- c(
+"Whoa man,",
+"Incredible,",
+"We noticed",
+"Uhhh, any reason",
+"Hmm,",
+"hmmM,",
+"Uhhh",
+"Yoooo,",
+"!!!! Why ",
+"Yeee,",
+"haha",
+"LOL,",
+"whoa damn",
+"kinda cool",
+"kinda lame",
+"pretty stupid",
+"pretty silly",
+"oddly enough"
+
+)
+
+top1 <- lt %>%
+filter(trend == local_trends[i,]$trend) %>%
+unnest_tokens(word, text) %>% #Unnest the words - code via Tidy Text
+anti_join(stop_words) %>% #remove stop words
+count(word, sort = T) %>% #do a word count
+filter(!word %in% c('t.co', local_trends[i,]$trend,'https', 'amp', 1:10)) %>%
+arrange(desc(n)) %>%
+head(1)
+
+seq2 <- c(
+"ppl like using these words:",
+paste("Seems like they mention",top1,"the most"),
+"i'm seeing high volumes of chatter!!!",
+paste("i'm detecting lotsa chatter about",top1),
+"what is all this chatter about?",
+paste("lots of chattering about",top1),
+"dang.",
+paste("Iunno what",top1,"would even mean"),
+"Twitter is blowing up!",
+"twitter is all over it",
+"drag them kings & queens",
+"check please.",
+"don't people have better things to do with their time?",
+"but i'm hardly even suprised",
+"and i'm hardly even suprised",
+"but that's no surprise to me",
+"what a way to waste my day on lol"
+)
+
+marks <- c(rep("?",5), "??", "???", "!?", "?!", "??!", "?!!?", "?!?", "..", ".", "...","....")
+
+sample(paste(seq1,local_trends[i,]$trend,paste0("is trending",marks), seq2),1)
+```
+
 ```{r}
 for(i in 1:5)
-tweet(text = paste(local_trends[i,]$trend,"was trending! Here is our summary:"), mediaPath = paste0("~/semico/", local_trends[i,]$trend, ".png"))
-
-#different captions 
-
-sample(c("has been popular!","was trending!"),1)
-
+tweet(text = sample(paste(seq1,local_trends[i,]$trend,paste0("is trending",marks), seq2),1), mediaPath = paste0("~/semico/", local_trends[i,]$trend, ".png"))
 ```
 
 ```{r}
@@ -122,6 +177,7 @@ ggplot(local_sentiment, aes(index, sentiment,fill=trend)) +
   geom_bar(stat = "identity", show.legend = FALSE) +
   facet_wrap(~trend, ncol = 2, scales = "free_x")
 ```
+
 ```{r}
 local_sent_count <- lt %>%
   unnest_tokens(word, text) %>%  
