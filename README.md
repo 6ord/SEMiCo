@@ -9,3 +9,5 @@ Goals:
 * Working on gathering more random colour generation for charts
 * Adding phrases and puctuation variations to the tweet generator to make it seem more realistic
 * To differentiate graph structure to bring another randomized element
+* No Twitter API confirmation
+* Will post some examples
