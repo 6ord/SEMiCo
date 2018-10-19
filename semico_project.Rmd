@@ -82,7 +82,7 @@ print(lt %>%
   head(20) %>%
   gg())
 
-# lemma
+# lemma, bigrams into words and reordered, adjust stop words
 # sample(c(gg,wc),1)
 ```
 
@@ -122,19 +122,18 @@ filter(trend == local_trends[i,]$trend) %>%
 unnest_tokens(word, text) %>% #Unnest the words - code via Tidy Text
 anti_join(stop_words) %>% #remove stop words
 count(word, sort = T) %>% #do a word count
-filter(!word %in% c('t.co', local_trends[i,]$trend,'https', 'amp', 1:10)) %>%
+filter(!word %in% c('t.co', tolower(local_trends[i,]$trend), str_replace(local_trends[i,]$trend, "#", ""), str_extract(pattern = "[a-z]+",tolower(local_trends[i,]$trend)), str_extract(pattern = "[a-z]+$",tolower(local_trends[1,]$trend)), 'https', 'amp', 1:10)) %>%
 arrange(desc(n)) %>%
 head(1)
 
 seq2 <- c(
-"ppl like using these words:",
-paste("Seems like they mention",top1,"the most"),
+paste("Seems like they mention",top1$word,"the most"),
 "i'm seeing high volumes of chatter!!!",
-paste("i'm detecting lotsa chatter about",top1),
+paste("i'm detecting lotsa chatter about",top1$word),
 "what is all this chatter about?",
-paste("lots of chattering about",top1),
+paste("lots of chattering about",top1$word),
 "dang.",
-paste("Iunno what",top1,"would even mean"),
+paste("Iunno what",top1$word,"would even mean"),
 "Twitter is blowing up!",
 "twitter is all over it",
 "drag them kings & queens",
@@ -143,7 +142,7 @@ paste("Iunno what",top1,"would even mean"),
 "but i'm hardly even suprised",
 "and i'm hardly even suprised",
 "but that's no surprise to me",
-"what a way to waste my day on lol"
+"what a way to waste the day on lol"
 )
 
 marks <- c(rep("?",5), "??", "???", "!?", "?!", "??!", "?!!?", "?!?", "..", ".", "...","....")
