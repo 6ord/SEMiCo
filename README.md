@@ -2,9 +2,9 @@
 
 For educational purposes.
 
-It violates Twitters automation laws to auto-tweet using trends.
+Currenlty violates Twitters automation laws to auto-tweet using trends.
 
-Currently
+Goals:
 * Will drop the explicit trend and use popular words in the tweet generation to comply
 * Working on gathering more random colour generation for charts
 * Adding phrases and puctuation variations to the tweet generator to make it seem more realistic
