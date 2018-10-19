@@ -20,21 +20,6 @@ create_token(app = Sys.getenv("TWITTER_APP"),
   consumer_secret = Sys.getenv("TWITTER_CONSUMER_SECRET"))
 ```
 
-Token Scrape
-```{r}
-# get the tweets
-rtr <- search_tweets("#RoadToRyerson", n = 2000, include_rts = FALSE)
-```
-
-```{r}
-rtrTable <- rtr %>%
-  unnest_tokens(word, text) %>%  #Unnest the words - code via Tidy Text
-  anti_join(stop_words) %>%  #remove stop words
-  count(word, sort = T) %>% #do a word count
-  filter(!word %in% c('t.co', 'https', 'roadtoryerson', 'amp', 'ryersonu', 'ryerson', 'ryersonsa', 'ryersonfcs', 'student', 1:10))
-rtrTable
-```
-
 WordCloud
 ```{r}
 ryePallete <- c('#1C5F9B', '#C1138A', '#2E1D3B', '#FCC210')
@@ -44,7 +29,6 @@ wordcloud2(x, size=0.7, color=rep_len(ryePallete, nrow(x)))
   save.image(paste0(local_trends[i,]$trend,".png"))
 }
 ```
-
 
 Top 5 Trends
 ```{r}
@@ -79,7 +63,7 @@ my_subtitle <- paste("based on", 2000, "recent tweets")
     coord_flip() +
     theme_classic() +
     theme(plot.title=element_text(family='', face='bold', size=16))
-  ggsave(paste0(local_trends[i,]$trend,".png"), path="C:/Users/Jake/Documents/semico")
+  ggsave(paste0(local_trends[i,]$trend,".png"), path="/Users/jakedaniels/SEMiCo_proj")
 }
 ```
 
@@ -88,15 +72,16 @@ my_subtitle <- paste("based on", 2000, "recent tweets")
 for(i in 1:5)
 print(lt %>%
   filter(trend == local_trends[i,]$trend) %>%
-  unnest_tokens(word, text) %>%  #Unnest the words - code via Tidy Text
-  anti_join(stop_words) %>%  #remove stop words
-  count(word, sort = T) %>% #do a word count
-  filter(!word %in% c('t.co', local_trends[i,]$trend,'https', 'amp', 1:10)) %>%
+  unnest_tokens(word, text) %>%  
+  anti_join(stop_words) %>%
+  count(word, sort = T) %>% 
+  filter(!word %in% c('t.co', tolower(local_trends[i,]$trend), str_replace(local_trends[i,]$trend, "#", ""), str_extract(pattern = "[a-z]+",tolower(local_trends[i,]$trend)), str_extract(pattern = "[a-z]+$",tolower(local_trends[1,]$trend)), 'https', 'amp', 1:10)) %>%
   arrange(desc(n)) %>%
   head(20) %>%
   gg())
 
-#sample(c(gg,wc),1)
+# lemma
+# sample(c(gg,wc),1)
 ```
 
 # CHANGE TOKEN TO SEMICO
@@ -110,5 +95,55 @@ setup_twitter_oauth(consumer_key = Sys.getenv("TWITTER_CONSUMER_KEY"), consumer_
 for(i in 1:5)
 tweet(text = paste(local_trends[i,]$trend,"was trending! Here is our summary:"), mediaPath = paste0("~/semico/", local_trends[i,]$trend, ".png"))
 
+#different captions 
 
+sample(c("has been popular!","was trending!"),1)
+
+```
+
+```{r}
+#top 6 trends - one big pic
+
+bing <- get_sentiments("bing")
+sent <- function(x) {
+  print(
+    x %>%
+  unnest_tokens(word, text) %>%  
+  inner_join(bing) %>%
+  group_by(trend) %>%
+  count(word, sentiment) %>%
+  spread(sentiment, n, fill = 0) %>%
+  mutate(sentiment = positive - negative)
+  )
+}
+local_sentiment <- sent(lt)
+
+ggplot(local_sentiment, aes(index, sentiment,fill=trend)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  facet_wrap(~trend, ncol = 2, scales = "free_x")
+```
+```{r}
+local_sent_count <- lt %>%
+  unnest_tokens(word, text) %>%  
+  inner_join(bing) %>%
+  anti_join(stop_words) %>%
+  group_by(trend) %>%
+  count(word, sentiment, sort =T) 
+
+for(i in 1:5)
+local_sent_count_1 <- local_sent_count %>%
+  filter(n > 25) %>%
+  filter(!word %in% c('t.co', tolower(local_trends[i,]$trend), str_replace(local_trends[i,]$trend, "#", ""), str_extract(pattern = "[a-z]+",tolower(local_trends[i,]$trend)), str_extract(pattern = "[a-z]+$",tolower(local_trends[i,]$trend)), 'https', 'amp', 1:10))
+
+local_sent_count_1
+  group_by(trend) %>%
+  mutate(n = ifelse(sentiment == "negative", -n, n)) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n, fill = sentiment)) +
+  facet_wrap(~trend, scales = "free") +
+  geom_col() +
+  coord_flip() +
+  labs(y = "Contribution to sentiment")
+
+# lemma, #more stop_words, fix edits
 ```
